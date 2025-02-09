@@ -8,49 +8,39 @@ from functools import cache
 # caching the function and using tuples gives us fast memoization for free
 @cache
 def count_graphs(deg_seq: tuple[int]) -> int:
+    """
+    Count number of simple graphs with given degree sequence
+
+    This is a brute-force recursive approach, but is fast for small graphs
+
+    :param tuple[int] deg_seq: a non-increasing sequence of integers, corresponding to the degrees of the vertices of a graph
+    """
     n = len(deg_seq)
     if n == 0:
+        # the empty graph counts, and the logic depends on this base case
         return 1
     elif n == 2 and deg_seq == (1,1):
+        # we can't reduce this base case through our normal recursive step
         return 1
     elif n < 3:
+        # degree sequences of length 2 or smaller other than (,) and (1,1) are
+        # not realizable as a simple graph
         return 0
     elif sum(deg_seq) % 2 == 1:
+        # sum(degrees) == 2*edges, so must be even to be realizable
         return 0
     
     total = 0
+    # every possible way of connecting the highest-degree node
     for indices in combinations(range(n-1), deg_seq[0]):
         rest = list(deg_seq[1:])
         for idx in indices:
             rest[idx] -= 1
+        # the degree sequence if we remove the highest-degree node
         new_seq = tuple(sorted((x for x in rest if x != 0), reverse=True))
         total += count_graphs(new_seq)
     return total
         
-        
-
-# Maybe using algorithm from https://arxiv.org/pdf/0905.4892
-# This is ultimately a way of optimizing the above method by excluding subtrees
-'''
-Given:
-    n = |V|
-    sequence = (d1, d2, ..., dn)
-    d1 >= d2 >= ... >= dn >= 1
-1.) Create rightmost adjacency set Ar(1) for node 1
-    a.) Connect node 1 to n
-    b.) k := n - 1
-    c.) Connect 1 to k. Run constrained graphicality test
-        Remove connection if fails
-    d.) k--
-    e.) If 1 has connections left to make, back to (c)
-2.) Create set of all adjacency sets of node 1 that are colexicographically 
-    smaller than Ar(1) and preserve graphicality:
-    A(d) := {A subset V | A <CL Ar(1) and d-A graphical}
-    a.) <CL is lexicographic order from right to left
-    b.) graphicality implied by <
-3.) Add graph count of d-A for all A in A(d)
-'''
-
 if __name__ == "__main__":
     # every deg_seq is of the form a*(4,) + b*(3,) + c*(2,)
     # a+b+c=13
